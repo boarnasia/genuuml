@@ -41,7 +41,7 @@ Install
 
 for user::
 
-    shell> pip install git+
+    shell> pip install git+https://github.com/boarnasia/genuuml#egg=genuuml
 
 for developmet::
 
