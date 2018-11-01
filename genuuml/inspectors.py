@@ -6,7 +6,7 @@ import re
 import types
 from importlib import import_module
 import inspect
-
+from typing import List
 
 class ClassNotFoundError(ModuleNotFoundError):
     pass
@@ -58,11 +58,19 @@ class ClassInspector():
         return len(self.bases) > 0
 
     def _inspect_class_object(self):
+        self._inspect_module_structure()
+        self._inspect_members()
+        self._inspect_bases()
+
+        return self
+
+    def _inspect_module_structure(self):
         self.module_object = inspect.getmodule(self.class_object)
         self.class_name = self.class_object.__name__
         self.absolute_module_path = self.module_object.__name__
         self.absolute_class_path = self.absolute_module_path + '.' + self.class_name
 
+    def _inspect_members(self):
         def get_signature(class_object, method_name):
             method_object = getattr(class_object, method_name)
             sigstr = method_name + str(inspect.signature(method_object))
@@ -73,26 +81,31 @@ class ClassInspector():
         members = [ attr for attr in dir(self.class_object) if attr not in other_members ]
         private_members = [ member for member in members if re.match(r'^_', member) ]
         public_members = [ member for member in members if re.match(r'^[^_]', member) ]
-        self.public_methods = [
-            get_signature(self.class_object, member) for member in ['__init__'] + public_members
+        self.public_methods_without_signature = [
+            member for member in ['__init__'] + public_members
                     if type(getattr(self.class_object, member)) in
                             [types.FunctionType, types.MethodType]
+        ]
+        self.public_methods = [
+            get_signature(self.class_object, member) for member in self.public_methods_without_signature
         ]
         self.public_properties = [ member for member in public_members
-                                      if member not in self.public_methods]
-        self.private_methods = [
-            get_signature(self.class_object, member) for member in private_members
+                                      if member not in self.public_methods_without_signature]
+        self.private_methods_without_signature = [
+            member for member in private_members
                     if type(getattr(self.class_object, member)) in
                             [types.FunctionType, types.MethodType]
         ]
+        self.private_methods = [
+            get_signature(self.class_object, member) for member in self.private_methods_without_signature
+        ]
         self.private_properties = [ member for member in private_members
-                                  if member not in self.private_methods]
+                                  if member not in self.private_methods_without_signature]
 
+    def _inspect_bases(self):
         self.bases = []
         for class_object in self.class_object.__bases__:
             self.bases.append(ClassInspector(class_object=class_object))
-
-        return self
 
     def __str__(self):
         return self.absolute_class_path
