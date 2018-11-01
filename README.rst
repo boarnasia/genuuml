@@ -3,6 +3,8 @@ genuuml
 
 Generate PlantUML script from python class.
 
+Only test for python 3.6 on Mac
+
 :License: MIT
 
 Getting started
@@ -39,7 +41,7 @@ Just type below command after install::
 Install
 -------
 
-for user::
+for use::
 
     shell> pip install git+https://github.com/boarnasia/genuuml#egg=genuuml
 
