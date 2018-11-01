@@ -27,7 +27,7 @@ class PlantUMLPrinter:
 
         for member in self.inspector.public_methods:
             str_repr += " " * self.indent
-            str_repr += "+" + member + "()"
+            str_repr += "+" + member
             str_repr += "\n"
 
         str_repr += "}\n\n"
