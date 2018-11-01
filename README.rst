@@ -47,7 +47,7 @@ for use::
 
 for developmet::
 
-    shell> git clone ..
+    shell> git clone git@github.com:boarnasia/genuuml.git
     shell> cd genuuml
     shell> virtualenv .venv
     shell> source .venv/bin/activate
@@ -66,6 +66,8 @@ positional arguments:
 Other tools that I referred
 ---------------------------
 
+- `genUML <https://github.com/jose-caballero/genUML>`_
 - `py2uml <https://github.com/Ivesvdf/py2uml>`_
 - `py-puml-tools <https://github.com/deadbok/py-puml-tools>`_
 - `genclass.py@gist <https://gist.github.com/stereocat/d6dd2caf60923c6334c6>`_
+

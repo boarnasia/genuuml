@@ -40,4 +40,12 @@ setup(
         # 'Programming Language :: Python :: 3.6',
         'Operating System :: OS Independent',
     ],
+    extras_require={
+        'dev': [
+            'ipython',
+            'pytest',
+            'pytest-pep8',
+            'pytest-cov'
+        ]
+    }
 )
