@@ -23,7 +23,8 @@ def generate_class_hierarchy(target_class_path: str) -> ClassInspector:
 def main():
     parser = _parse_args()
     class_hierarchy = generate_class_hierarchy(parser.target_class)
-    print(PlantUMLPrinter(class_hierarchy))
+    printer = PlantUMLPrinter(class_hierarchy)
+    print(printer.source)
 
 
 if __name__=='__main__':
