@@ -1,16 +1,14 @@
 from os.path import join, dirname
 from setuptools import setup, find_packages
 
+from genuuml import __version__
+
 PACKAGE_NAME = 'genuuml'
-
-
-with open(join(dirname(__file__), PACKAGE_NAME, 'VERSION'), 'rb') as f:
-    version = f.read().decode('ascii').strip()
 
 
 setup(
     name='genuuml',
-    version=version,
+    version=__version__,
     url='',
     description='PlantUML generator from python script',
     long_description=open('README.rst').read(),
