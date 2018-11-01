@@ -17,20 +17,31 @@ Just type below command after install::
     shell> genuuml http.client.HTTPConnection
     class http.client.HTTPConnection as "HTTPConnection" {
       +auto_open
+      +close
+      +connect
       +debuglevel
       +default_port
+      +endheaders
+      +getresponse
+      +putheader
+      +putrequest
+      +request
       +response_class
+      +send
+      +set_debuglevel
+      +set_tunnel
 
-      +close()
-      +connect()
-      +endheaders()
-      +getresponse()
-      +putheader()
-      +putrequest()
-      +request()
-      +send()
-      +set_debuglevel()
-      +set_tunnel()
+      +__init__(self, host, port=None, timeout=<object>, source_address=None)
+      +close(self)
+      +connect(self)
+      +endheaders(self, message_body=None, *, encode_chunked=False)
+      +getresponse(self)
+      +putheader(self, header, *values)
+      +putrequest(self, method, url, skip_host=False, skip_accept_encoding=False)
+      +request(self, method, url, body=None, headers={}, *, encode_chunked=False)
+      +send(self, data)
+      +set_debuglevel(self, level)
+      +set_tunnel(self, host, port=None, headers=None)
     }
 
     http.client.HTTPConnection -up-|> builtins.object
