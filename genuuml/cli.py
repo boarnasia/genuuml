@@ -1,6 +1,7 @@
 from os.path import join, dirname
 from argparse import ArgumentParser
 
+from .utils import exit
 from .inspectors import ClassInspector
 from .printers import PlantUMLPrinter
 from . import __version__
@@ -21,7 +22,10 @@ def _parse_args() -> object:
 
 
 def generate_class_hierarchy(target_class_path: str) -> ClassInspector:
-    inspector = ClassInspector(class_path=target_class_path)
+    try:
+        inspector = ClassInspector(class_path=target_class_path)
+    except ImportError as e:
+        exit("Module or Class has not found. [{}]".format(target_class_path), exit_code=1)
 
     return inspector
 

@@ -8,7 +8,7 @@ from importlib import import_module
 import inspect
 from typing import List
 
-class ClassNotFoundError(ModuleNotFoundError):
+class ClassNotFoundError(ImportError):
     pass
 
 
