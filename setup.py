@@ -38,6 +38,9 @@ setup(
         # 'Programming Language :: Python :: 3.6',
         'Operating System :: OS Independent',
     ],
+    install_requires = [
+        'Click==7.0',
+    ],
     extras_require={
         'dev': [
             'ipython',
