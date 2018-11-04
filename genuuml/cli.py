@@ -1,7 +1,5 @@
-from os.path import join, dirname
-from argparse import ArgumentParser
-
 import click
+from typing import List
 
 from .utils import exit
 from .inspectors import ClassInspector
@@ -17,8 +15,8 @@ class AliasedGroup(click.Group):
 
     Example:
 
-    - `as-plnat-uml` Corrent command name is OK
-    - `as-ascii-tree` Corrent command name is OK
+    - `as-plnat-uml` Correct command name is OK
+    - `as-ascii-tree` Correct command name is OK
     - `as-p` A part of command name is also OK
     - `as-` A part of command name matching more than one command is NG
 
@@ -32,14 +30,8 @@ class AliasedGroup(click.Group):
             return rv
 
         # A part of command name is also OK
-        commands = self.list_commands(ctx)
-        matches = []
-        for command in commands:
-            try:
-                command.index(cmd_name)
-                matches.append(command)
-            except ValueError:
-                pass
+        cmd_list = self.list_commands(ctx)
+        matches = self._collect_commands(cmd_name, cmd_list)
 
         if not matches:
             return None
@@ -53,6 +45,30 @@ class AliasedGroup(click.Group):
 
         return rv
 
+    @classmethod
+    def _collect_commands(cls, cmd_name: str, cmd_list: List) -> List:
+        """
+        Collect and return command list that `cmd_name` matching with `cmd_list`.
+        >>> cmd_list = ['as-plant-uml', 'as-ascii-tree']
+        >>> AliasedGroup._collect_commands('as-plant-uml', cmd_list)
+        ['as-plant-uml']
+
+        >>> AliasedGroup._collect_commands('uml', cmd_list)
+        ['as-plant-uml']
+
+        >>> AliasedGroup._collect_commands('as', cmd_list)
+        ['as-plant-uml', 'as-ascii-tree']
+        """
+
+        def idx_filter(item):
+            try:
+                item.index(cmd_name)
+                return True
+            except ValueError as e:
+                return False
+
+        return list(filter(idx_filter, cmd_list))
+
 
 @click.group(cls=AliasedGroup)
 @click.version_option(version=__version__)
@@ -65,16 +81,12 @@ def main():
     Example:
 
     \b
-        `as-plnat-uml` Corrent command name is OK
-        `as-ascii-tree` Corrent command name is OK
+        `as-plnat-uml` Correct command name is OK
+        `as-ascii-tree` Correct command name is OK
         `as-p` A part of command name is also OK
         `as-` A part of command name matching more than one command is NG
     """
     pass
-    # parser = _parse_args()
-    # class_hierarchy = generate_class_hierarchy(parser.target_class)
-    # printer = PlantUMLPrinter(class_hierarchy)
-    # print(printer.source)
 
 
 @main.command()
