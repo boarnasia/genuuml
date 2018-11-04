@@ -2,8 +2,10 @@ import click
 from typing import List
 
 from .utils import exit
-from .inspectors import ClassInspector
-from .printers import PlantUMLPrinter
+# from .inspectors import OldClassInspector
+# from .printers import PlantUMLPrinter
+from .inspectors import ClassRegistry
+from .builders import PlantUMLBuilder
 from . import __version__
 
 
@@ -95,12 +97,20 @@ def as_plant_uml(class_path):
     """
     Print in PlantUML format.
     """
+    click.echo(class_path)
+    registry = ClassRegistry()
     try:
-        inspector = ClassInspector(class_path=class_path)
+        registry.inspect(class_path)
     except ImportError as e:
         exit("Module or Class has not found. [{}]".format(target_class_path), exit_code=1)
-    printer = PlantUMLPrinter(inspector)
-    click.echo(printer.source)
+    builder = PlantUMLBuilder(
+        indent=2,
+        print_self=False,
+        print_default_value=False,
+        print_typehint=False
+    )
+    source = builder.build(registry)
+    click.echo(source)
 
 
 @main.command()
