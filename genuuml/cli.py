@@ -1,40 +1,141 @@
-from os.path import join, dirname
-from argparse import ArgumentParser
+import click
+from typing import List
 
 from .utils import exit
-from .inspectors import ClassInspector
-from .printers import PlantUMLPrinter
+# from .inspectors import OldClassInspector
+# from .printers import PlantUMLPrinter
+from .inspectors import ClassRegistry
+from .builders import PlantUMLBuilder, AsciiTreeBuilder
 from . import __version__
 
 
-def _parse_args() -> object:
+def _build_registry(class_paths: List[str]) -> ClassRegistry:
     """
-    Parse arguments, return parser.
+    Build and return ClassRegistry instance.
+
+    :param class_paths: Class path list.
     """
-    parser = ArgumentParser()
-    parser.add_argument("target_class",
-                        help="Class name in python package. ex: scrapy.spiders.CrawlSpider")
-    parser.add_argument("--version", action="version",
-                        version="%(prog)s {}".format(__version__))
-    args = parser.parse_args()
-
-    return args
+    registry = ClassRegistry()
+    for path in class_paths:
+        registry.inspect(path)
+    return registry
 
 
-def generate_class_hierarchy(target_class_path: str) -> ClassInspector:
-    try:
-        inspector = ClassInspector(class_path=target_class_path)
-    except ImportError as e:
-        exit("Module or Class has not found. [{}]".format(target_class_path), exit_code=1)
 
-    return inspector
+class AliasedGroup(click.Group):
+    """
+    Provide alias functionality for subcommands.
+
+    Subcommands can be invoked by giving correct name or a part of string included in command name.
+
+    Example:
+
+    - `as-plnat-uml` Correct command name is OK
+    - `as-ascii-tree` Correct command name is OK
+    - `as-p` A part of command name is also OK
+    - `as-` A part of command name matching more than one command is NG
+
+    See https://pocoo-click.readthedocs.io/en/latest/advanced/#command-aliases
+    """
+
+    def get_command(self, ctx, cmd_name):
+        # Correct name is OK
+        rv = click.Group.get_command(self, ctx, cmd_name)
+        if rv is not None:
+            return rv
+
+        # A part of command name is also OK
+        cmd_list = self.list_commands(ctx)
+        matches = self._collect_commands(cmd_name, cmd_list)
+
+        if not matches:
+            return None
+        elif len(matches) == 1:
+            return click.Group.get_command(self, ctx, matches[0])
+
+        # A part matching multiple is NG.
+        ctx.fail('Too many matches: {}'.format(
+            ', '.join(sorted(matches))
+        ))
+
+        return rv
+
+    @classmethod
+    def _collect_commands(cls, cmd_name: str, cmd_list: List) -> List:
+        """
+        Collect and return command list that `cmd_name` matching with `cmd_list`.
+        >>> cmd_list = ['as-plant-uml', 'as-ascii-tree']
+        >>> AliasedGroup._collect_commands('as-plant-uml', cmd_list)
+        ['as-plant-uml']
+
+        >>> AliasedGroup._collect_commands('uml', cmd_list)
+        ['as-plant-uml']
+
+        >>> AliasedGroup._collect_commands('as', cmd_list)
+        ['as-plant-uml', 'as-ascii-tree']
+        """
+
+        def idx_filter(item):
+            try:
+                item.index(cmd_name)
+                return True
+            except ValueError as e:
+                return False
+
+        return list(filter(idx_filter, cmd_list))
 
 
+@click.group(cls=AliasedGroup)
+@click.version_option(version=__version__)
 def main():
-    parser = _parse_args()
-    class_hierarchy = generate_class_hierarchy(parser.target_class)
-    printer = PlantUMLPrinter(class_hierarchy)
-    print(printer.source)
+    """
+    Print given class information in PlantUML format or Ascii Tree format.
+
+    Subcommands can be invoked by giving correct name or a partial name included in command name.
+
+    Example:
+
+    \b
+        `as-plnat-uml` Correct command name is OK
+        `as-ascii-tree` Correct command name is OK
+        `as-p` A part of command name is also OK
+        `as-` A part of command name matching more than one command is NG
+    """
+    # Placeholder for subcommands
+    pass
+
+
+@main.command()
+@click.argument('class_paths', nargs=-1)
+def as_plant_uml(class_paths):
+    """
+    Print in PlantUML format.
+    """
+    registry = _build_registry(class_paths)
+
+    for path in class_paths:
+        registry.inspect(path)
+
+    builder = PlantUMLBuilder(
+        indent=2,
+        print_self=False,
+        print_default_value=False,
+        print_typehint=False
+    )
+    source = builder.build(registry)
+    click.echo(source)
+
+
+@main.command()
+@click.argument('class_paths', nargs=-1)
+def as_ascii_tree(class_paths):
+    """
+    Print in Ascii Tree format.
+    """
+    registry = _build_registry(class_paths)
+    builder = AsciiTreeBuilder()
+    source = builder.build(registry)
+    click.echo(source)
 
 
 if __name__=='__main__':
