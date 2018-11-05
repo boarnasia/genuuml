@@ -57,27 +57,34 @@ for developmet::
 Usege
 -----
 
-Usage: genuuml [OPTIONS] COMMAND [ARGS]...
+::
 
-  Print given class information in PlantUML format or Ascii Tree format.
+    Usage: genuuml [OPTIONS] COMMAND [ARGS]...
 
-  Subcommands can be invoked by giving correct name or a partial name
-  included in command name.
+    Print given classes information in PlantUML format or Ascii Tree format.
 
-  Example:
+    Subcommands can be invoked by giving correct name or a partial name
+    included in command name.
 
-      `as-plnat-uml` Correct command name is OK
-      `as-ascii-tree` Correct command name is OK
-      `as-p` A part of command name is also OK
-      `as-` A part of command name matching more than one command is NG
+    Example:
 
-Options:
-  --version  Show the version and exit.
-  --help     Show this message and exit.
+        `in-plnat-uml` Correct command name is OK
+        `in-ascii-tree` Correct command name is OK
+        `in-p` A part of command name is also OK
+        `in-` A part of command name matching more than one command is NG
 
-Commands:
-  as-ascii-tree  Print in Ascii Tree format.
-  as-plant-uml   Print in PlantUML format.
+    All subcommands receive CLASS_PATHS arguments.  CLASS_PATHS can be
+    accepted that are class or module path, and those can be mixed.  When
+    module path was given, it would be replaced into class paths defined in
+    the module.
+
+    Options:
+    --version  Show the version and exit.
+    --help     Show this message and exit.
+
+    Commands:
+    in-ascii-tree  Print in Ascii Tree format.
+    in-plant-uml   Print in PlantUML format.
 
 Utility commands for developer
 ------------------------------
