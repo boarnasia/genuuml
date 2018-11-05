@@ -62,7 +62,7 @@ class PlantUMLBuilder(Builder):
         return (
             "@startuml\n"
             "\n"
-            "hide empty methods\n"
+            "hide empty members\n"
             "\n")
 
     @property

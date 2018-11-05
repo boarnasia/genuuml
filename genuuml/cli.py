@@ -92,17 +92,16 @@ def main():
 
 
 @main.command()
-@click.argument('class_path')
-def as_plant_uml(class_path):
+@click.argument('class_paths', nargs=-1)
+def as_plant_uml(class_paths):
     """
     Print in PlantUML format.
     """
-    click.echo(class_path)
     registry = ClassRegistry()
-    try:
-        registry.inspect(class_path)
-    except ImportError as e:
-        exit("Module or Class has not found. [{}]".format(target_class_path), exit_code=1)
+
+    for path in class_paths:
+        registry.inspect(path)
+
     builder = PlantUMLBuilder(
         indent=2,
         print_self=False,
@@ -114,8 +113,8 @@ def as_plant_uml(class_path):
 
 
 @main.command()
-@click.argument('class_path')
-def as_ascii_tree(class_path):
+@click.argument('class_paths', nargs=-1)
+def as_ascii_tree(class_paths):
     """
     Print in Ascii Tree format.
     """
