@@ -4,7 +4,10 @@ Source builders
 
 import re
 from inspect import signature
-from typing import Callable
+from typing import Callable, Set, Dict
+from operator import itemgetter
+
+from tree_format import format_tree
 
 from .inspectors import ClassRegistry, ClassInspector
 
@@ -48,8 +51,8 @@ class Builder:
 
         return ""
 
-class PlantUMLBuilder(Builder):
 
+class PlantUMLBuilder(Builder):
     def __init__(self, indent=2, print_self=False,
                  print_typehint=False, print_default_value=False):
         super().__init__(indent)
@@ -141,4 +144,43 @@ class PlantUMLBuilder(Builder):
         source += "\n"
 
         return source
+
+
+class AsciiTreeBuilder(Builder):
+
+    def build(self, registry: ClassRegistry) -> str:
+        """
+        Build the source and return.
+
+        :param registry: ClassRegistry object to be built.
+        """
+        #import pudb; pu.db
+
+        children = self._build_children(registry)
+        tree = self._build_tree('builtins.object', children)
+        source = format_tree(
+            tree,
+            format_node=itemgetter(0), 
+            get_children=itemgetter(1)
+        )
+
+        print(source)
+
+    def _build_children(self, registry: ClassRegistry) -> str:
+        children = dict()
+        for class_path_outer in registry.keys():
+            klass: ClassInspector = registry[class_path_outer]
+            for class_inner in klass.parents:
+                class_path_inner = class_inner.class_path
+                if not class_path_inner in children.keys():
+                    children[class_path_inner] = list()
+                children[class_path_inner].append(class_path_outer)
+        return children
+                
+
+    def _build_tree(self, root: str, src: Dict) -> str:
+        children = []
+        for child in src.get(root, []):
+            children.append(self._build_tree(child, src))
+        return [root, children]
 

@@ -5,8 +5,21 @@ from .utils import exit
 # from .inspectors import OldClassInspector
 # from .printers import PlantUMLPrinter
 from .inspectors import ClassRegistry
-from .builders import PlantUMLBuilder
+from .builders import PlantUMLBuilder, AsciiTreeBuilder
 from . import __version__
+
+
+def _build_registry(class_paths: List[str]) -> ClassRegistry:
+    """
+    Build and return ClassRegistry instance.
+
+    :param class_paths: Class path list.
+    """
+    registry = ClassRegistry()
+    for path in class_paths:
+        registry.inspect(path)
+    return registry
+
 
 
 class AliasedGroup(click.Group):
@@ -88,6 +101,7 @@ def main():
         `as-p` A part of command name is also OK
         `as-` A part of command name matching more than one command is NG
     """
+    # Placeholder for subcommands
     pass
 
 
@@ -97,7 +111,7 @@ def as_plant_uml(class_paths):
     """
     Print in PlantUML format.
     """
-    registry = ClassRegistry()
+    registry = _build_registry(class_paths)
 
     for path in class_paths:
         registry.inspect(path)
@@ -118,7 +132,10 @@ def as_ascii_tree(class_paths):
     """
     Print in Ascii Tree format.
     """
-    click.echo("Not implemented yet.")
+    registry = _build_registry(class_paths)
+    builder = AsciiTreeBuilder()
+    source = builder.build(registry)
+    click.echo(source)
 
 
 if __name__=='__main__':

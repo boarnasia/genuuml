@@ -91,10 +91,13 @@ class ClassInspector:
         return self.class_path if self.class_path else "(empty)"
 
     def __eq__(self, other: 'ClassInspector') -> bool:
-        return self.class_path == other.class_path
+        return hash(self) == hash(other)
 
     def __ne__(self, other: 'ClassInspector') -> bool:
         return not self.class_path == other.class_path
+
+    def __hash__(self):
+        return hash(self.class_path)
 
 
 class ClassRegistry(dict):

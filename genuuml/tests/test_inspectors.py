@@ -131,8 +131,7 @@ class TestClassInspector:
         assert obj.module_path == 'genuuml.tests.demo'
         assert obj.class_path == 'genuuml.tests.demo.Baz'
         assert obj.file_path == locate(Baz.__module__).__file__
-        assert len(obj.parents) == 1
-        assert id(obj.parents[0]) == id(self.registry.get('genuuml.tests.demo.Baa'))
+        assert set(obj.parents) == set([self.registry.get('genuuml.tests.demo.Baa')])
 #         # Fixme: how do i know properties are automatically added?
 #         # assert obj.full_properties == [
 #         #     '__doc__',
