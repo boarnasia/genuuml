@@ -164,7 +164,7 @@ class AsciiTreeBuilder(Builder):
             get_children=itemgetter(1)
         )
 
-        print(source)
+        return source
 
     def _build_children(self, registry: ClassRegistry) -> str:
         children = dict()

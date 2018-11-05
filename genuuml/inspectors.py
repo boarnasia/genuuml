@@ -23,7 +23,8 @@ def resolve_type(klass: Union[type, object, str]) -> type:
         resolved_class = locate(klass)
 
     if not type(resolved_class) == type:
-        raise ClassNotFoundError("Class not found. [{}]".format(klass))
+        raise ClassNotFoundError("Class not found. [{}]".format(klass),
+                                 klass)
 
     return resolved_class
 

@@ -1,23 +1,54 @@
-import click
+import sys
 from typing import List
+from importlib import import_module
+
+import click
 
 from .utils import exit
 # from .inspectors import OldClassInspector
 # from .printers import PlantUMLPrinter
-from .inspectors import ClassRegistry
+from .inspectors import ClassRegistry, ClassNotFoundError
 from .builders import PlantUMLBuilder, AsciiTreeBuilder
 from . import __version__
 
 
+def _module_to_class(paths: List[str]) -> List[str]:
+    """
+    Helper function.
+    """
+    ret = list()
+    for path in paths:
+        try:
+            module = import_module(path)
+            for member in dir(module):
+                klass = getattr(module, member)
+                if type(klass) == type:
+                    class_path = klass.__module__ + '.' + klass.__name__
+                    ret.append(class_path)
+        except ModuleNotFoundError:
+            ret.append(path)
+
+    return ret
+
+
 def _build_registry(class_paths: List[str]) -> ClassRegistry:
     """
+    Helper function.
     Build and return ClassRegistry instance.
 
     :param class_paths: Class path list.
     """
+    class_paths = _module_to_class(class_paths)
     registry = ClassRegistry()
-    for path in class_paths:
-        registry.inspect(path)
+    try:
+        for path in class_paths:
+            registry.inspect(path)
+    except ClassNotFoundError as e:
+        click.secho('Given class [{}] not found.'.format(e.args[1]),
+                    fg='red',
+                    err=True)
+        sys.exit(1)
+
     return registry
 
 
@@ -89,33 +120,31 @@ class AliasedGroup(click.Group):
 @click.version_option(version=__version__)
 def main():
     """
-    Print given class information in PlantUML format or Ascii Tree format.
+    Print given classes information in PlantUML format or Ascii Tree format.
 
     Subcommands can be invoked by giving correct name or a partial name included in command name.
 
     Example:
 
     \b
-        `as-plnat-uml` Correct command name is OK
-        `as-ascii-tree` Correct command name is OK
-        `as-p` A part of command name is also OK
-        `as-` A part of command name matching more than one command is NG
+        `in-plnat-uml` Correct command name is OK
+        `in-ascii-tree` Correct command name is OK
+        `in-p` A part of command name is also OK
+        `in-` A part of command name matching more than one command is NG
+
+    All subcommands receive CLASS_PATHS arguments.  CLASS_PATHS can be accepted that are class or module path, and those can be mixed.  When module path was given, it would be replaced into class paths defined in the module.
     """
     # Placeholder for subcommands
     pass
 
 
 @main.command()
-@click.argument('class_paths', nargs=-1)
-def as_plant_uml(class_paths):
+@click.argument('class_paths', nargs=-1, required=True)
+def in_plant_uml(class_paths):
     """
     Print in PlantUML format.
     """
     registry = _build_registry(class_paths)
-
-    for path in class_paths:
-        registry.inspect(path)
-
     builder = PlantUMLBuilder(
         indent=2,
         print_self=False,
@@ -127,8 +156,8 @@ def as_plant_uml(class_paths):
 
 
 @main.command()
-@click.argument('class_paths', nargs=-1)
-def as_ascii_tree(class_paths):
+@click.argument('class_paths', nargs=-1, required=True)
+def in_ascii_tree(class_paths):
     """
     Print in Ascii Tree format.
     """
