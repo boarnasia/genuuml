@@ -1,67 +1,10 @@
-import sys
 from typing import List
-from importlib import import_module
+from textwrap import indent
 
 import click
 
-# from .inspectors import OldClassInspector
-# from .printers import PlantUMLPrinter
-from .inspectors import ClassRegistry, ClassNotFoundError
-from .builders import PlantUMLBuilder, AsciiTreeBuilder
 from . import __version__
-
-
-def _module_path_to_class_path(paths: List[str]) -> List[str]:
-    """
-    Helper function.
-
-    If given path was a module path, convert the module path into the class
-    paths defined in it.
-    """
-    class_paths = list()
-    for path in paths:
-        # loop all paths
-        try:
-            # Duck test
-            # Given path can be imported by using `import_module`, it's a
-            # module path.
-            module = import_module(path)
-            for member in dir(module):
-                # check members
-                klass = getattr(module, member)
-                if type(klass) == type:
-                    # Collect class path if the member is a class.
-                    class_path = klass.__module__ + '.' + klass.__name__
-                    class_paths.append(class_path)
-
-        except ModuleNotFoundError:
-            # Oops, the path isn't a module path.
-            # That may be a class path.
-            class_paths.append(path)
-
-    return class_paths
-
-
-def _build_registry(class_paths: List[str]) -> ClassRegistry:
-    """
-    Helper function.
-    Build and return ClassRegistry instance.
-
-    :param class_paths: Class path list.
-    :return: ClassRegistry object
-    """
-    class_paths = _module_path_to_class_path(class_paths)
-    registry = ClassRegistry()
-    for path in class_paths:
-        try:
-            registry.inspect(path)
-        except ClassNotFoundError as e:
-            click.secho('Given class [{}] not found.'.format(e.args[1]),
-                        fg='red',
-                        err=True)
-
-    return registry
-
+from . import genuuml
 
 
 class AliasedGroup(click.Group):
@@ -149,21 +92,28 @@ def main():
     pass
 
 
+def _print_not_founds(not_founds: List[str]):
+    if not_founds:
+        click.secho("Given class not found.", fg='red', err=True)
+        for class_path in not_founds:
+            msg = indent("- " + class_path, "  ")
+            click.secho(msg, fg='red', err=True)
+        click.secho("=" * 60, fg='red', err=True)
+        click.echo("")
+
+
 @main.command()
 @click.argument('class_paths', nargs=-1, required=True)
 def in_plant_uml(class_paths):
     """
     Print in PlantUML format.
     """
-    registry = _build_registry(class_paths)
-    builder = PlantUMLBuilder(
-        indent=2,
-        print_self=False,
-        print_default_value=False,
-        print_typehint=False
-    )
-    source = builder.build(registry)
+    source, not_founds = genuuml.in_plant_uml(class_paths)
+
+    _print_not_founds(not_founds)
+
     click.echo(source)
+
 
 
 @main.command()
@@ -172,9 +122,10 @@ def in_ascii_tree(class_paths):
     """
     Print in Ascii Tree format.
     """
-    registry = _build_registry(class_paths)
-    builder = AsciiTreeBuilder()
-    source = builder.build(registry)
+    source, not_founds = genuuml.in_ascii_tree(class_paths)
+
+    _print_not_founds(not_founds)
+
     click.echo(source)
 
 
