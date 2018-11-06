@@ -4,7 +4,6 @@ from importlib import import_module
 
 import click
 
-from .utils import exit
 # from .inspectors import OldClassInspector
 # from .printers import PlantUMLPrinter
 from .inspectors import ClassRegistry, ClassNotFoundError
@@ -12,23 +11,35 @@ from .builders import PlantUMLBuilder, AsciiTreeBuilder
 from . import __version__
 
 
-def _module_to_class(paths: List[str]) -> List[str]:
+def _module_path_to_class_path(paths: List[str]) -> List[str]:
     """
     Helper function.
+
+    If given path was a module path, convert the module path into the class
+    paths defined in it.
     """
-    ret = list()
+    class_paths = list()
     for path in paths:
+        # loop all paths
         try:
+            # Duck test
+            # Given path can be imported by using `import_module`, it's a
+            # module path.
             module = import_module(path)
             for member in dir(module):
+                # check members
                 klass = getattr(module, member)
                 if type(klass) == type:
+                    # Collect class path if the member is a class.
                     class_path = klass.__module__ + '.' + klass.__name__
-                    ret.append(class_path)
-        except ModuleNotFoundError:
-            ret.append(path)
+                    class_paths.append(class_path)
 
-    return ret
+        except ModuleNotFoundError:
+            # Oops, the path isn't a module path.
+            # That may be a class path.
+            class_paths.append(path)
+
+    return class_paths
 
 
 def _build_registry(class_paths: List[str]) -> ClassRegistry:
@@ -37,17 +48,17 @@ def _build_registry(class_paths: List[str]) -> ClassRegistry:
     Build and return ClassRegistry instance.
 
     :param class_paths: Class path list.
+    :return: ClassRegistry object
     """
-    class_paths = _module_to_class(class_paths)
+    class_paths = _module_path_to_class_path(class_paths)
     registry = ClassRegistry()
-    try:
-        for path in class_paths:
+    for path in class_paths:
+        try:
             registry.inspect(path)
-    except ClassNotFoundError as e:
-        click.secho('Given class [{}] not found.'.format(e.args[1]),
-                    fg='red',
-                    err=True)
-        sys.exit(1)
+        except ClassNotFoundError as e:
+            click.secho('Given class [{}] not found.'.format(e.args[1]),
+                        fg='red',
+                        err=True)
 
     return registry
 
