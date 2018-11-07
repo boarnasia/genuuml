@@ -13,6 +13,8 @@ from .inspectors import ClassRegistry, ClassInspector
 
 
 class Builder:
+    indent: int
+
     def __init__(self, indent=2):
         self.indent = indent
 
@@ -53,15 +55,26 @@ class Builder:
 
 
 class PlantUMLBuilder(Builder):
-    def __init__(self, indent=2, print_self=False,
-                 print_typehint=False, print_default_value=False,
-                 print_full_signature=False, max_signature_width=25):
+    print_typehint: bool
+    print_default_value: bool
+    print_full_signature: bool
+    max_signature_width: int
+    print_builtins_members: bool
+
+    def __init__(self,
+                 indent=2,
+                 print_typehint=False,
+                 print_default_value=False,
+                 print_full_signature=False,
+                 max_signature_width=25,
+                 print_builtins_members=False,
+                 ):
         super().__init__(indent)
-        self.print_self = print_self
         self.print_typehint = print_typehint
         self.print_default_value = print_default_value
         self.print_full_signature = print_full_signature
         self.max_signature_width = max_signature_width
+        self.print_builtins_members = print_builtins_members
 
     @property
     def pre_script(self):
@@ -88,10 +101,7 @@ class PlantUMLBuilder(Builder):
         try:
             source = str(signature(method))
         except ValueError:
-            source = "({builtin})"
-
-        if not self.print_self:
-            source = re.sub(r'self\s*,\s*', '', source)
+            source = "(...)"
 
         # Fixme: 変数名に使える値でちゃんと切ったほうがいい
         if not self.print_typehint:
@@ -116,24 +126,23 @@ class PlantUMLBuilder(Builder):
         )
         source += '{\n'
 
-        props = klass.data + klass.data_descriptors + klass.properties
-        methods = klass.static_methods + klass.class_methods + klass.methods
-        props.sort()
-        methods.sort()
+        if not klass.module_path == object.__module__ or self.print_builtins_members:
+            props = klass.data + klass.data_descriptors + klass.properties
+            methods = klass.static_methods + klass.class_methods + klass.methods
+            props.sort()
+            methods.sort()
 
-        for member in props:
-            line = "+" + member
-            if member in klass.data:
-                line = "{static}+" + member
-            source += self.line(line, 1)
+            for member in props:
+                line = "+" + member
+                source += self.line(line, 1)
 
-        static_like_methods = klass.static_methods + klass.class_methods
-        for method in methods:
-            line = "+" + method + self._build_signature(getattr(klass.klass, method))
-            if method in static_like_methods:
-                line = "{static}" + line
+            static_like_methods = klass.static_methods + klass.class_methods
+            for method in methods:
+                line = "+" + method + self._build_signature(getattr(klass.klass, method))
+                if method in static_like_methods:
+                    line = "{static}" + line
 
-            source += self.line(line, 1)
+                source += self.line(line, 1)
 
         source += "}\n\n"
 

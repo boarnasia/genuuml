@@ -54,8 +54,6 @@ def visiblename(name, all=None, obj=None) -> bool:
     """
     # Certain special names are redundant or internal.
     # XXX Remove __initializing__?
-    if obj.__module__ == object.__module__:
-        return False
     if name in {'__author__', '__builtins__', '__cached__', '__credits__',
                 '__date__', '__doc__', '__file__', '__spec__',
                 '__loader__', '__module__', '__name__', '__package__',

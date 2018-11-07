@@ -72,9 +72,11 @@ def in_plant_uml(class_paths: List[str]) -> List:
     registry, not_founds = build_registry(class_paths)
     builder = PlantUMLBuilder(
         indent=2,
-        print_self=False,
+        print_typehint=False,
         print_default_value=False,
-        print_typehint=False
+        print_full_signature=False,
+        max_signature_width=25,
+        print_builtins_members=False,
     )
     source = builder.build(registry)
 
