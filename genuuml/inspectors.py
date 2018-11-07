@@ -4,7 +4,7 @@ Inspectors
 
 import inspect
 import re
-import types
+from types import ModuleType
 from importlib import import_module
 from pydoc import locate, classify_class_attrs
 from typing import List, Union
@@ -97,35 +97,86 @@ def classify_class_public_attrs(klass) -> List:
     return attrs
 
 class ClassInspector:
+
+    @property
+    def klass(self) -> type:
+        """
+        Class object of target class
+        """
+        return self._klass
+
+    @property
+    def name(self):
+        return self.klass.__name__
+
+    @property
+    def registry(self) -> 'ClassRegistry':
+        """
+        ClassRegistry object
+        """
+        return self._registry
+
+    @property
+    def module(self) -> ModuleType:
+        """
+        Module instance of target class
+        """
+        return self._module
+
+    @property
+    def module_path(self) -> str:
+        return self.klass.__module__
+
+    @property
+    def class_path(self) -> str:
+        return self.module_path + "." + self.name
+
+    @property
+    def file_path(self) -> str:
+        return getattr(self.module, '__file__', "")
+
+    @property
+    def class_methods(self) -> List[str]:
+        return self._class_methods
+
+    @property
+    def static_methods(self) -> List[str]:
+        return self._static_methods
+
+    @property
+    def properties(self) -> List[str]:
+        return self._properties
+
+    @property
+    def methods(self) -> List[str]:
+        return self._methods
+
+    @property
+    def data_descriptors(self) -> List[str]:
+        return self._data_descriptors
+
+    @property
+    def data(self) -> List[str]:
+        return self._data
+
+    @property
+    def parents(self) -> List['ClassInspector']:
+        return self._parents
+
     def __init__(self, klass: Union[type, object, str],
                  registry: 'ClassRegistry'):
-        self.registry = registry
+        self._klass = resolve_type(klass)
+        self._registry = registry
+        self._module = locate(self.klass.__module__)
 
-        self.klass = None
-        self.module = None
-        self.module_path = ""
-        self.class_path = ""
-        self.file_path = ""
+        self._class_methods = []
+        self._static_methods = []
+        self._properties = []
+        self._methods = []
+        self._data_descriptors = []
+        self._data = []
 
-        self.class_methods = []
-        self.static_methods = []
-        self.properties = []
-        self.methods = []
-        self.data_descriptors = []
-        self.data = []
-
-        self.parents: list[ClassInspector] = []
-
-        self._inspect(klass)
-
-
-    def _inspect(self, klass: Union[type, object, str]):
-        self.klass = resolve_type(klass)
-        self.name = self.klass.__name__
-        self.module_path = self.klass.__module__
-        self.module = locate(self.klass.__module__)
-        self.class_path = self.module_path + "." + self.name
-        self.file_path = getattr(self.module, '__file__', "")
+        self._parents = []
 
         for parent in self.klass.__bases__:
             self.parents.append(self.registry.inspect(parent))

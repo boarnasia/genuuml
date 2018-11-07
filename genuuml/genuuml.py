@@ -62,7 +62,14 @@ def build_registry(class_paths: List[str]) -> List:
     return [registry, not_founds]
 
 
-def in_plant_uml(class_paths: List[str]) -> List:
+def in_plant_uml(class_paths: List[str],
+                 indent: int,
+                 print_typehint: bool,
+                 print_default_value: bool,
+                 print_full_arguments: bool,
+                 max_arguments_width: int,
+                 print_builtins_members: int,
+                 ) -> List:
     """
     Return source in plant uml format by inspecting given class paths.
 
@@ -71,12 +78,12 @@ def in_plant_uml(class_paths: List[str]) -> List:
     """
     registry, not_founds = build_registry(class_paths)
     builder = PlantUMLBuilder(
-        indent=2,
-        print_typehint=False,
-        print_default_value=False,
-        print_full_arguments=False,
-        max_arguments_width=25,
-        print_builtins_members=False,
+        indent=indent,
+        print_typehint=print_typehint,
+        print_default_value=print_default_value,
+        print_full_arguments=print_full_arguments,
+        max_arguments_width=max_arguments_width,
+        print_builtins_members=print_builtins_members,
     )
     source = builder.build(registry)
 

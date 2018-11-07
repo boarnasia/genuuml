@@ -14,7 +14,7 @@ Getting started
 
 Just type below command after install::
 
-    shell> genuuml as-plant-uml http.client.HTTPConnection
+    shell> genuuml in-plant-uml --print-full-arguments http.client.HTTPConnection
     @startuml
 
     hide empty members
@@ -25,15 +25,24 @@ Just type below command after install::
     class http.client.HTTPConnection as "HTTPConnection"{
     +auto_open
     +debuglevel
-    ..(omit)..
-    +send(data)
-    +set_debuglevel(level)
-    +set_tunnel(host, port, headers)
+    +default_port
+    +response_class
+    +__init__(self, host, port, timeout, source_address)
+    +close(self)
+    +connect(self)
+    +endheaders(self, message_body, *, encode_chunked)
+    +getresponse(self)
+    +putheader(self, header, *values)
+    +putrequest(self, method, url, skip_host, skip_accept_encoding)
+    +request(self, method, url, body, headers, *, encode_chunked)
+    +send(self, data)
+    +set_debuglevel(self, level)
+    +set_tunnel(self, host, port, headers)
     }
 
     http.client.HTTPConnection -up-|> builtins.object
 
-    @enduml
+    @enduml   @enduml
 
     shell> genuuml as-ascii-tree http.client.HTTPConnection
     builtins.object

@@ -13,12 +13,9 @@ from .inspectors import ClassRegistry, ClassInspector
 
 
 class Builder:
-    indent: int = 2
-    pre_script: str = ""
-    post_script: str = ""
 
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
+    def __init__(self, indent:int=2):
+        self.indent = indent
 
     def build(self, registry: ClassRegistry) -> str:
         """
@@ -39,19 +36,120 @@ class Builder:
 
         return (self.indent * " ") + line + "\n"
 
+    @property
+    def indent(self) -> int:
+        """
+        Hold indent width.
+        """
+        return self.__indent
+
+    @indent.setter
+    def indent(self, val: int):
+        self.__indent = val
+
 
 class PlantUMLBuilder(Builder):
-    print_typehint: bool = False
-    print_default_value: bool = False
-    print_full_arguments: bool = False
-    max_arguments_width: int = 25
-    print_builtins_members: bool = False
-    pre_script: str = (
-            "@startuml\n"
-            "\n"
-            "hide empty members\n"
-            "\n")
-    post_script: str = "@enduml\n"
+    def __init__(self,
+                 indent: int = 2,
+                 print_typehint: bool = False,
+                 print_default_value: bool = False,
+                 print_full_arguments: bool = False,
+                 max_arguments_width: int = 25,
+                 print_builtins_members: bool = False,
+                 pre_script: str = (
+                         "@startuml\n"
+                         "\n"
+                         "hide empty members\n"
+                         "\n"),
+                 post_script: str = "@enduml\n"
+                 ):
+        super().__init__(indent)
+        self.print_typehint = print_typehint
+        self.print_default_value = print_default_value
+        self.print_full_arguments = print_full_arguments
+        self.max_arguments_width = max_arguments_width
+        self.print_builtins_members = print_builtins_members
+        self.pre_script = pre_script
+        self.post_script = post_script
+
+    @property
+    def print_typehint(self) -> bool:
+        """
+        Switch for printing typehint
+        """
+        return self._print_typehint
+    
+    @print_typehint.setter
+    def print_typehint(self, val: bool):
+        self._print_typehint = val
+    
+    @property
+    def print_default_value(self) -> bool:
+        """
+        Switch for printing default value of method's arguments
+        """
+        return self._print_default_value
+    
+    @print_default_value.setter
+    def print_default_value(self, val: bool):
+        self._print_default_value = val
+
+    @property
+    def print_full_arguments(self) -> bool:
+        """
+        Switch for printing full of method's arguments
+        """
+        return self._print_full_arguments
+    
+    @print_full_arguments.setter
+    def print_full_arguments(self, val: bool):
+        self._print_full_arguments = val
+
+    @property
+    def max_arguments_width(self) -> int:
+        """
+        Width of method's argument string
+        """
+        return self._max_arguments_width
+    
+    @max_arguments_width.setter
+    def max_arguments_width(self, val: int):
+        self._max_arguments_width = val
+
+    @property
+    def print_builtins_members(self) -> bool:
+        """
+        Switch for printing members of builtin classes.
+        """
+        return self._print_builtins_members
+    
+    @print_builtins_members.setter
+    def print_builtins_members(self, val: bool):
+        self._print_builtins_members = val
+
+    @property
+    def pre_script(self) -> str:
+        """
+        Script that is printed before class definisions.
+        ex: @startuml
+        """
+        return self._pre_script
+    
+    @pre_script.setter
+    def pre_script(self, val: str):
+        self._pre_script = val
+
+    @property
+    def post_script(self) -> str:
+        """
+        Script that is printed after class definisions.
+        ex: @enduml
+        """
+        return self._post_script
+    
+    @post_script.setter
+    def post_script(self, val: str):
+        self._post_script = val
 
     def build(self, registry: ClassRegistry) -> str:
         source = self.pre_script

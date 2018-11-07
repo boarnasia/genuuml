@@ -104,11 +104,22 @@ def _print_not_founds(not_founds: List[str]):
 
 @main.command()
 @click.argument('class_paths', nargs=-1, required=True)
-def in_plant_uml(class_paths):
+@click.option('-i', '--indent', default=2, type=int, help="Set indent level")
+@click.option('--print-typehint/--no-print-typehint', default=False, help="Toggle typehint on/off")
+@click.option('--print-default-value/--no-print-default-value', default=False, help="Toggle default value in method's arguments on/off")
+@click.option('--print-full-arguments/--no-print-full-arguments', default=False, help="Toggle full method's arguments on/off")
+@click.option('--max-arguments-width', default=25, type=int, help="Method's arguments width")
+@click.option('--print-builtins-members/--no-print-builtins-members', default=False, help="Toggle print members of builtin classes on/off")
+def in_plant_uml(class_paths, indent, print_typehint, print_default_value,
+                 print_full_arguments, max_arguments_width, print_builtins_members):
     """
     Print in PlantUML format.
     """
-    source, not_founds = genuuml.in_plant_uml(class_paths)
+    source, not_founds = genuuml.in_plant_uml(class_paths, indent,
+                                              print_typehint, print_default_value,
+                                              print_full_arguments, max_arguments_width,
+                                              print_builtins_members
+                                              )
 
     _print_not_founds(not_founds)
 
