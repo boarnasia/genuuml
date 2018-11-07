@@ -54,11 +54,14 @@ class Builder:
 
 class PlantUMLBuilder(Builder):
     def __init__(self, indent=2, print_self=False,
-                 print_typehint=False, print_default_value=False):
+                 print_typehint=False, print_default_value=False,
+                 print_full_signature=False, max_signature_width=25):
         super().__init__(indent)
         self.print_self = print_self
         self.print_typehint = print_typehint
         self.print_default_value = print_default_value
+        self.print_full_signature = print_full_signature
+        self.max_signature_width = max_signature_width
 
     @property
     def pre_script(self):
@@ -99,6 +102,10 @@ class PlantUMLBuilder(Builder):
         if not self.print_default_value:
             source = re.sub(r'\s*=\s*[^.,)]*', '', source)
 
+        if not self.print_full_signature:
+            mx = self.max_signature_width
+            source = (source[:mx] + ' .. )') if len(source) > mx else source
+
         return source
 
 
@@ -109,14 +116,24 @@ class PlantUMLBuilder(Builder):
         )
         source += '{\n'
 
-        for member in klass.full_public_properties:
-            source += self.line("+" + member, 1)
+        props = klass.data + klass.data_descriptors + klass.properties
+        methods = klass.static_methods + klass.class_methods + klass.methods
+        props.sort()
+        methods.sort()
 
-        source += "\n" if len(klass.full_public_properties) > 0 else ""
+        for member in props:
+            line = "+" + member
+            if member in klass.data:
+                line = "{static}+" + member
+            source += self.line(line, 1)
 
-        for method in klass.full_public_methods:
-            sig = method + self._build_signature(getattr(klass.klass, method))
-            source += self.line("+" + sig, 1)
+        static_like_methods = klass.static_methods + klass.class_methods
+        for method in methods:
+            line = "+" + method + self._build_signature(getattr(klass.klass, method))
+            if method in static_like_methods:
+                line = "{static}" + line
+
+            source += self.line(line, 1)
 
         source += "}\n\n"
 

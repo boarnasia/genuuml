@@ -2,12 +2,12 @@
 Inspectors
 """
 
+import inspect
 import re
 import types
-from typing import List, Union
 from importlib import import_module
-import inspect
-from pydoc import locate
+from pydoc import locate, classify_class_attrs
+from typing import List, Union
 
 
 class ClassNotFoundError(ImportError):
@@ -15,6 +15,19 @@ class ClassNotFoundError(ImportError):
 
 
 def resolve_type(klass: Union[type, object, str]) -> type:
+    """
+    Return a type instance.
+
+    This function accepts type, object and class path as an argument `klass`.
+    If `klass` is a type instance, return it as is.
+    If `klass` is a object, return the type instance of the object.
+    If `klass` is a class path, return the type instance of the class path.
+
+    Eventually, if type instance not be found, raise `ClassNotFoundError`.
+
+    :param klass: Type instance, object or class path.
+    :return: Type instance of `klass`
+    """
     resolved_class = klass.__class__
     if type(klass) == type:
         resolved_class = klass
@@ -29,6 +42,62 @@ def resolve_type(klass: Union[type, object, str]) -> type:
     return resolved_class
 
 
+def visiblename(name, all=None, obj=None) -> bool:
+    """
+    Decide whether to show documentation on a variable.
+    Copied from `pydoc.visiblename`, difference is it return 0 when obj is
+    `object` and name is those:
+
+        __annotations__
+        __dict__
+        __weakref__
+    """
+    # Certain special names are redundant or internal.
+    # XXX Remove __initializing__?
+    if obj.__module__ == object.__module__:
+        return False
+    if name in {'__author__', '__builtins__', '__cached__', '__credits__',
+                '__date__', '__doc__', '__file__', '__spec__',
+                '__loader__', '__module__', '__name__', '__package__',
+                '__path__', '__qualname__', '__slots__', '__version__',
+                '__annotations__', '__dict__', '__weakref__', }:
+        return False
+    # Private names are hidden, but special names are displayed.
+    if name.startswith('__') and name.endswith('__'): return 1
+    # Namedtuples have public fields and methods with a single leading underscore
+    if name.startswith('_') and hasattr(obj, '_fields'):
+        return True
+    if all is not None:
+        # only document that which the programmer exported in __all__
+        return name in all
+    else:
+        return not name.startswith('_')
+
+
+def classify_class_public_attrs(klass) -> List:
+    """
+    Return public attributes of given `klass`.
+    It uses `pydoc.classify_class_attrs`.
+
+    kind:
+        'class method'    created via classmethod()
+        'static method'   created via staticmethod()
+        'property'        created via property()
+        'method'          any other flavor of method or descriptor
+        'data descriptor' data descriptor
+        'data'            not a method
+
+    Fixme: It may not collect properties correctly.
+
+    :param klass: Class object
+    :return: List of attributes consisting with name, kind and value
+    """
+    attrs = [(name, kind, value)
+            for name, kind, cls, value in classify_class_attrs(klass)
+            if visiblename(name, obj=klass) and cls==klass]
+
+    return attrs
+
 class ClassInspector:
     def __init__(self, klass: Union[type, object, str],
                  registry: 'ClassRegistry'):
@@ -40,19 +109,12 @@ class ClassInspector:
         self.class_path = ""
         self.file_path = ""
 
-        # self.properties = []
-        # self.private_properties = []
-        # self.public_properties = []
-        self.full_properties = []
-        self.full_private_properties = []
-        self.full_public_properties = []
-
-        # self.methods = []
-        # self.private_methods = []
-        # self.public_methods = []
-        self.full_methods = []
-        self.full_private_methods = []
-        self.full_public_methods = []
+        self.class_methods = []
+        self.static_methods = []
+        self.properties = []
+        self.methods = []
+        self.data_descriptors = []
+        self.data = []
 
         self.parents: list[ClassInspector] = []
 
@@ -70,23 +132,28 @@ class ClassInspector:
         for parent in self.klass.__bases__:
             self.parents.append(self.registry.inspect(parent))
 
-        for attr in dir(self.klass):
-            if callable(getattr(self.klass, attr)):
-                self.full_methods.append(attr)
-            else:
-                self.full_properties.append(attr)
+        attrs = classify_class_public_attrs(self.klass)
 
-        for prop in self.full_properties:
-            if re.match(r'^_', prop):
-                self.full_private_properties.append(prop)
-            else:
-                self.full_public_properties.append(prop)
+        for name, kind, value in attrs:
+            if kind == 'class method':
+                self.class_methods.append(name)
+            elif kind == 'static method':
+                self.static_methods.append(name)
+            elif kind == 'property':
+                self.properties.append(name)
+            elif kind == 'method':
+                self.methods.append(name)
+            elif kind == 'data descriptor':
+                self.data_descriptors.append(name)
+            elif kind == 'data':
+                self.data.append(name)
+        self.class_methods.sort()
+        self.static_methods.sort()
+        self.properties.sort()
+        self.methods.sort()
+        self.data_descriptors.sort()
+        self.data.sort()
 
-        for method in self.full_methods:
-            if re.match(r'^_', method):
-                self.full_private_methods.append(method)
-            else:
-                self.full_public_methods.append(method)
 
     def __str__(self) -> str:
         return self.class_path if self.class_path else "(empty)"

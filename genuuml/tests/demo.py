@@ -30,12 +30,25 @@ class Foo(object):
     def __init__(self, arg: list, kwarg: dict=True):
         self.object_prop_foo: bool = True
 
+    @staticmethod
+    def STATIC_METHOD_FOO(arg: list, kwarg: dict=True) -> str:
+        pass
+
     @classmethod
     def CLASS_METHOD_FOO(cls, arg: list, kwarg: dict=True) -> str:
         pass
 
     def object_method_foo(self, arg: list, kwarg: dict=True) -> str:
         pass
+
+    def property_get_foo(self):
+        pass
+
+    def property_set_foo(self):
+        pass
+
+    property_foo = property(property_get_foo, property_set_foo)
+
 
 class Baa(Foo):
     CLASS_PROP_BAA: bool = True
@@ -56,12 +69,25 @@ class Baz(Baa):
     def __init__(self, arg: list, kwarg: dict=True):
         self.object_prop_baz: bool = True
 
+    @staticmethod
+    def STATIC_METHOD_BAZ(arg: list, kwarg: dict=True) -> str:
+        pass
+
     @classmethod
     def CLASS_METHOD_BAZ(cls, arg: list, kwarg: dict=True) -> str:
         pass
 
     def object_method_baz(self, arg: list, kwarg: dict=True) -> str:
         pass
+
+    def get_baz(self, arg: list, kwarg: dict=True) -> str:
+        pass
+
+    def set_baz(self, arg: list, kwarg: dict=True) -> str:
+        pass
+
+    baz = property(get_baz, set_baz)
+
 
 class Mixin(object):
     CLASS_PROP_MIXIN: bool = True

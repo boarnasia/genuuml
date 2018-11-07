@@ -14,6 +14,7 @@ from genuuml.inspectors import (
     resolve_type,
     ClassRegistry,
     ClassInspector,
+    classify_class_public_attrs,
 )
 
 from genuuml.tests.demo import (
@@ -22,10 +23,6 @@ from genuuml.tests.demo import (
 
 
 class TestResolveTypes:
-    """
-    Test resolve_type, resolve_type_from_instance and resolve_type_from_string.
-    """
-
     def test_resolve_type_from_type(self):
         # Basic instance test
         t = resolve_type(Foo)
@@ -69,6 +66,31 @@ class TestResolveTypes:
             t = resolve_type('aaaa')
 
 
+class TestClassifyClassAttrs:
+    def test_with_object(self):
+        attrs = classify_class_public_attrs(object)
+        assert attrs == []
+
+    def test_with_Foo(self):
+        attrs = classify_class_public_attrs(Foo)
+        for name, kind, value in attrs:
+            print(name, kind)
+
+        assert len(attrs) == 8
+        expects = {
+            '__init__': 'method',
+            'STATIC_METHOD_FOO': 'static method',
+            'CLASS_METHOD_FOO': 'class method',
+            'object_method_foo': 'method',
+            'property_foo': 'data descriptor',
+            'property_get_foo': 'method',
+            'property_set_foo': 'method',
+            'CLASS_PROP_FOO': 'data',
+        }
+        for name, kind, value in attrs:
+            assert kind == expects[name]
+
+
 class TestClassRegistry:
 
     def setup_method(self):
@@ -96,32 +118,12 @@ class TestClassInspector:
         assert obj.class_path == 'builtins.object'
         assert obj.file_path == ''
         assert obj.parents == []
-        assert obj.full_public_properties == []
-        assert obj.full_public_methods == []
-
-        # Fixme: how do i know properties are automatically added?
-        # assert obj.full_properties == ['__doc__']
-        # assert obj.full_private_properties == ['__doc__']
-        # assert obj.full_methods == [
-        #     '__class__', '__delattr__', '__dir__', '__eq__', '__format__',
-        #     '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__',
-        #     '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__',
-        #     '__reduce__', '__reduce_ex__', '__repr__', '__setattr__',
-        #     '__sizeof__', '__str__', '__subclasshook__',]
-        # assert obj.full_private_methods == [
-        #     '__class__', '__delattr__', '__dir__', '__eq__', '__format__',
-        #     '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__',
-        #     '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__',
-        #     '__reduce__', '__reduce_ex__', '__repr__', '__setattr__',
-        #     '__sizeof__', '__str__', '__subclasshook__',]
-
-        # Fixme: how do i distincts properties b/w local and inherited
-        # obj.properties                # local properties
-        # obj.private_properties
-        # obj.public_properties
-        # obj.methods                   # local methods
-        # obj.private_methods
-        # obj.public_methods
+        assert obj.class_methods == []
+        assert obj.static_methods == []
+        assert obj.properties == []
+        assert obj.methods == []
+        assert obj.data_descriptors == []
+        assert obj.data == []
 
     def test_inspect_with_Baz(self):
         obj = self.registry.inspect(Baz)
@@ -132,38 +134,9 @@ class TestClassInspector:
         assert obj.class_path == 'genuuml.tests.demo.Baz'
         assert obj.file_path == locate(Baz.__module__).__file__
         assert set(obj.parents) == set([self.registry.get('genuuml.tests.demo.Baa')])
-#         # Fixme: how do i know properties are automatically added?
-#         # assert obj.full_properties == [
-#         #     '__doc__',
-#         #     'CLASS_PROP_FOO',
-#         #     'CLASS_PROP_BAA',
-#         #     'CLASS_PROP_BAZ',
-#         # ]
-#         # assert obj.full_private_properties == ['__doc__']
-#         assert set(obj.full_public_properties) == set([
-#             'CLASS_PROP_FOO',
-#             'CLASS_PROP_BAA',
-#             'CLASS_PROP_BAZ',
-#         ])
-#         # Fixme: how do i know properties are automatically added?
-#         # assert obj.full_methods == [
-#         #     '__class__', '__delattr__', '__dir__', '__eq__', '__format__',
-#         #     '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__',
-#         #     '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__',
-#         #     '__reduce__', '__reduce_ex__', '__repr__', '__setattr__',
-#         #     '__sizeof__', '__str__', '__subclasshook__',
-#         #     'CLASS_METHOD_FOO', 'CLASS_METHOD_BAA', 'CLASS_METHOD_BAZ',
-#         #     'objec_method_foo', 'objec_method_baa', 'objec_method_baz',
-#         # ]
-#         # assert obj.full_private_methods == [
-#         #     '__class__', '__delattr__', '__dir__', '__eq__', '__format__',
-#         #     '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__',
-#         #     '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__',
-#         #     '__reduce__', '__reduce_ex__', '__repr__', '__setattr__',
-#         #     '__sizeof__', '__str__', '__subclasshook__',]
-#         assert set(obj.full_public_methods) == set([
-#             'CLASS_METHOD_FOO', 'CLASS_METHOD_BAA', 'CLASS_METHOD_BAZ',
-#             'object_method_foo', 'object_method_baa', 'object_method_baz',
-#         ])
-# 
-# 
+        assert obj.class_methods == ['CLASS_METHOD_BAZ']
+        assert obj.static_methods == ['STATIC_METHOD_BAZ']
+        assert obj.properties == []
+        assert set(obj.methods) == set(['__init__', 'object_method_baz', 'get_baz', 'set_baz'])
+        assert obj.data_descriptors == ['baz']
+        assert obj.data == ['CLASS_PROP_BAZ']
