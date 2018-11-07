@@ -74,8 +74,8 @@ def in_plant_uml(class_paths: List[str]) -> List:
         indent=2,
         print_typehint=False,
         print_default_value=False,
-        print_full_signature=False,
-        max_signature_width=25,
+        print_full_arguments=False,
+        max_arguments_width=25,
         print_builtins_members=False,
     )
     source = builder.build(registry)

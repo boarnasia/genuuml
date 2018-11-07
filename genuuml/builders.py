@@ -13,10 +13,12 @@ from .inspectors import ClassRegistry, ClassInspector
 
 
 class Builder:
-    indent: int
+    indent: int = 2
+    pre_script: str = ""
+    post_script: str = ""
 
-    def __init__(self, indent=2):
-        self.indent = indent
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
     def build(self, registry: ClassRegistry) -> str:
         """
@@ -37,56 +39,19 @@ class Builder:
 
         return (self.indent * " ") + line + "\n"
 
-    @property
-    def pre_script(self):
-        """
-        Return the post script to be inserted before the source.
-        """
-        
-        return ""
-
-    @property
-    def post_script(self):
-        """
-        Return the post script to be inserted after the source.
-        """
-
-        return ""
-
 
 class PlantUMLBuilder(Builder):
-    print_typehint: bool
-    print_default_value: bool
-    print_full_signature: bool
-    max_signature_width: int
-    print_builtins_members: bool
-
-    def __init__(self,
-                 indent=2,
-                 print_typehint=False,
-                 print_default_value=False,
-                 print_full_signature=False,
-                 max_signature_width=25,
-                 print_builtins_members=False,
-                 ):
-        super().__init__(indent)
-        self.print_typehint = print_typehint
-        self.print_default_value = print_default_value
-        self.print_full_signature = print_full_signature
-        self.max_signature_width = max_signature_width
-        self.print_builtins_members = print_builtins_members
-
-    @property
-    def pre_script(self):
-        return (
+    print_typehint: bool = False
+    print_default_value: bool = False
+    print_full_arguments: bool = False
+    max_arguments_width: int = 25
+    print_builtins_members: bool = False
+    pre_script: str = (
             "@startuml\n"
             "\n"
             "hide empty members\n"
             "\n")
-
-    @property
-    def post_script(self):
-        return "@enduml\n"
+    post_script: str = "@enduml\n"
 
     def build(self, registry: ClassRegistry) -> str:
         source = self.pre_script
@@ -105,16 +70,16 @@ class PlantUMLBuilder(Builder):
 
         # Fixme: 変数名に使える値でちゃんと切ったほうがいい
         if not self.print_typehint:
-            source = re.sub(r'\s*:\s*[^.,)=]*', '', source)
-            source = re.sub(r'\s*->\s*[^.,)=]*$', '', source)
+            source = re.sub(r'\s*:\s*[^,)=]*', '', source)
+            source = re.sub(r'\s*->\s*[^,)=]*$', '', source)
 
         # Fixme: 変数名に使える値でちゃんと切ったほうがいい
         if not self.print_default_value:
             source = re.sub(r'\s*=\s*[^.,)]*', '', source)
 
-        if not self.print_full_signature:
-            mx = self.max_signature_width
-            source = (source[:mx] + ' .. )') if len(source) > mx else source
+        if not self.print_full_arguments:
+            mx = self.max_arguments_width
+            source = (source[:mx] + ' ... )') if len(source) > mx else source
 
         return source
 
