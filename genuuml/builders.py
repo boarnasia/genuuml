@@ -13,7 +13,8 @@ from .inspectors import ClassRegistry, ClassInspector
 
 
 class Builder:
-    def __init__(self, indent=2):
+
+    def __init__(self, indent:int=2):
         self.indent = indent
 
     def build(self, registry: ClassRegistry) -> str:
@@ -36,41 +37,119 @@ class Builder:
         return (self.indent * " ") + line + "\n"
 
     @property
-    def pre_script(self):
+    def indent(self) -> int:
         """
-        Return the post script to be inserted before the source.
+        Hold indent width.
         """
-        
-        return ""
+        return self.__indent
 
-    @property
-    def post_script(self):
-        """
-        Return the post script to be inserted after the source.
-        """
-
-        return ""
+    @indent.setter
+    def indent(self, val: int):
+        self.__indent = val
 
 
 class PlantUMLBuilder(Builder):
-    def __init__(self, indent=2, print_self=False,
-                 print_typehint=False, print_default_value=False):
+    def __init__(self,
+                 indent: int = 2,
+                 print_typehint: bool = False,
+                 print_default_value: bool = False,
+                 print_full_arguments: bool = False,
+                 max_arguments_width: int = 25,
+                 print_builtins_members: bool = False,
+                 pre_script: str = (
+                         "@startuml\n"
+                         "\n"
+                         "hide empty members\n"
+                         "\n"),
+                 post_script: str = "@enduml\n"
+                 ):
         super().__init__(indent)
-        self.print_self = print_self
         self.print_typehint = print_typehint
         self.print_default_value = print_default_value
+        self.print_full_arguments = print_full_arguments
+        self.max_arguments_width = max_arguments_width
+        self.print_builtins_members = print_builtins_members
+        self.pre_script = pre_script
+        self.post_script = post_script
 
     @property
-    def pre_script(self):
-        return (
-            "@startuml\n"
-            "\n"
-            "hide empty members\n"
-            "\n")
+    def print_typehint(self) -> bool:
+        """
+        Switch for printing typehint
+        """
+        return self._print_typehint
+    
+    @print_typehint.setter
+    def print_typehint(self, val: bool):
+        self._print_typehint = val
+    
+    @property
+    def print_default_value(self) -> bool:
+        """
+        Switch for printing default value of method's arguments
+        """
+        return self._print_default_value
+    
+    @print_default_value.setter
+    def print_default_value(self, val: bool):
+        self._print_default_value = val
 
     @property
-    def post_script(self):
-        return "@enduml\n"
+    def print_full_arguments(self) -> bool:
+        """
+        Switch for printing full of method's arguments
+        """
+        return self._print_full_arguments
+    
+    @print_full_arguments.setter
+    def print_full_arguments(self, val: bool):
+        self._print_full_arguments = val
+
+    @property
+    def max_arguments_width(self) -> int:
+        """
+        Width of method's argument string
+        """
+        return self._max_arguments_width
+    
+    @max_arguments_width.setter
+    def max_arguments_width(self, val: int):
+        self._max_arguments_width = val
+
+    @property
+    def print_builtins_members(self) -> bool:
+        """
+        Switch for printing members of builtin classes.
+        """
+        return self._print_builtins_members
+    
+    @print_builtins_members.setter
+    def print_builtins_members(self, val: bool):
+        self._print_builtins_members = val
+
+    @property
+    def pre_script(self) -> str:
+        """
+        Script that is printed before class definisions.
+        ex: @startuml
+        """
+        return self._pre_script
+    
+    @pre_script.setter
+    def pre_script(self, val: str):
+        self._pre_script = val
+
+    @property
+    def post_script(self) -> str:
+        """
+        Script that is printed after class definisions.
+        ex: @enduml
+        """
+        return self._post_script
+    
+    @post_script.setter
+    def post_script(self, val: str):
+        self._post_script = val
 
     def build(self, registry: ClassRegistry) -> str:
         source = self.pre_script
@@ -85,19 +164,20 @@ class PlantUMLBuilder(Builder):
         try:
             source = str(signature(method))
         except ValueError:
-            source = "({builtin})"
-
-        if not self.print_self:
-            source = re.sub(r'self\s*,\s*', '', source)
+            source = "(...)"
 
         # Fixme: 変数名に使える値でちゃんと切ったほうがいい
         if not self.print_typehint:
-            source = re.sub(r'\s*:\s*[^.,)=]*', '', source)
-            source = re.sub(r'\s*->\s*[^.,)=]*$', '', source)
+            source = re.sub(r'\s*:\s*[^,)=]*', '', source)
+            source = re.sub(r'\s*->\s*[^,)=]*$', '', source)
 
         # Fixme: 変数名に使える値でちゃんと切ったほうがいい
         if not self.print_default_value:
             source = re.sub(r'\s*=\s*[^.,)]*', '', source)
+
+        if not self.print_full_arguments:
+            mx = self.max_arguments_width
+            source = (source[:mx] + ' ... )') if len(source) > mx else source
 
         return source
 
@@ -109,14 +189,23 @@ class PlantUMLBuilder(Builder):
         )
         source += '{\n'
 
-        for member in klass.full_public_properties:
-            source += self.line("+" + member, 1)
+        if not klass.module_path == object.__module__ or self.print_builtins_members:
+            props = klass.data + klass.data_descriptors + klass.properties
+            methods = klass.static_methods + klass.class_methods + klass.methods
+            props.sort()
+            methods.sort()
 
-        source += "\n" if len(klass.full_public_properties) > 0 else ""
+            for member in props:
+                line = "+" + member
+                source += self.line(line, 1)
 
-        for method in klass.full_public_methods:
-            sig = method + self._build_signature(getattr(klass.klass, method))
-            source += self.line("+" + sig, 1)
+            static_like_methods = klass.static_methods + klass.class_methods
+            for method in methods:
+                line = "+" + method + self._build_signature(getattr(klass.klass, method))
+                if method in static_like_methods:
+                    line = "{static}" + line
+
+                source += self.line(line, 1)
 
         source += "}\n\n"
 

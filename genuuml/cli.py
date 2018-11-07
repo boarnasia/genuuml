@@ -1,56 +1,10 @@
-import sys
 from typing import List
-from importlib import import_module
+from textwrap import indent
 
 import click
 
-from .utils import exit
-# from .inspectors import OldClassInspector
-# from .printers import PlantUMLPrinter
-from .inspectors import ClassRegistry, ClassNotFoundError
-from .builders import PlantUMLBuilder, AsciiTreeBuilder
 from . import __version__
-
-
-def _module_to_class(paths: List[str]) -> List[str]:
-    """
-    Helper function.
-    """
-    ret = list()
-    for path in paths:
-        try:
-            module = import_module(path)
-            for member in dir(module):
-                klass = getattr(module, member)
-                if type(klass) == type:
-                    class_path = klass.__module__ + '.' + klass.__name__
-                    ret.append(class_path)
-        except ModuleNotFoundError:
-            ret.append(path)
-
-    return ret
-
-
-def _build_registry(class_paths: List[str]) -> ClassRegistry:
-    """
-    Helper function.
-    Build and return ClassRegistry instance.
-
-    :param class_paths: Class path list.
-    """
-    class_paths = _module_to_class(class_paths)
-    registry = ClassRegistry()
-    try:
-        for path in class_paths:
-            registry.inspect(path)
-    except ClassNotFoundError as e:
-        click.secho('Given class [{}] not found.'.format(e.args[1]),
-                    fg='red',
-                    err=True)
-        sys.exit(1)
-
-    return registry
-
+from . import genuuml
 
 
 class AliasedGroup(click.Group):
@@ -138,21 +92,39 @@ def main():
     pass
 
 
+def _print_not_founds(not_founds: List[str]):
+    if not_founds:
+        click.secho("Given class not found.", fg='red', err=True)
+        for class_path in not_founds:
+            msg = indent("- " + class_path, "  ")
+            click.secho(msg, fg='red', err=True)
+        click.secho("=" * 60, fg='red', err=True)
+        click.echo("")
+
+
 @main.command()
 @click.argument('class_paths', nargs=-1, required=True)
-def in_plant_uml(class_paths):
+@click.option('-i', '--indent', default=2, type=int, help="Set indent level")
+@click.option('--print-typehint/--no-print-typehint', default=False, help="Toggle typehint on/off")
+@click.option('--print-default-value/--no-print-default-value', default=False, help="Toggle default value in method's arguments on/off")
+@click.option('--print-full-arguments/--no-print-full-arguments', default=False, help="Toggle full method's arguments on/off")
+@click.option('--max-arguments-width', default=25, type=int, help="Method's arguments width")
+@click.option('--print-builtins-members/--no-print-builtins-members', default=False, help="Toggle print members of builtin classes on/off")
+def in_plant_uml(class_paths, indent, print_typehint, print_default_value,
+                 print_full_arguments, max_arguments_width, print_builtins_members):
     """
     Print in PlantUML format.
     """
-    registry = _build_registry(class_paths)
-    builder = PlantUMLBuilder(
-        indent=2,
-        print_self=False,
-        print_default_value=False,
-        print_typehint=False
-    )
-    source = builder.build(registry)
+    source, not_founds = genuuml.in_plant_uml(class_paths, indent,
+                                              print_typehint, print_default_value,
+                                              print_full_arguments, max_arguments_width,
+                                              print_builtins_members
+                                              )
+
+    _print_not_founds(not_founds)
+
     click.echo(source)
+
 
 
 @main.command()
@@ -161,9 +133,10 @@ def in_ascii_tree(class_paths):
     """
     Print in Ascii Tree format.
     """
-    registry = _build_registry(class_paths)
-    builder = AsciiTreeBuilder()
-    source = builder.build(registry)
+    source, not_founds = genuuml.in_ascii_tree(class_paths)
+
+    _print_not_founds(not_founds)
+
     click.echo(source)
 
 
