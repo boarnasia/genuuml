@@ -1,9 +1,12 @@
 from os.path import join, dirname
 from setuptools import setup, find_packages
 
-from genuuml import __version__
 
 PACKAGE_NAME = 'genuuml'
+
+# Load __version__
+with open(join(PACKAGE_NAME, 'version.py'), 'r') as f:
+    exec(f.read())
 
 
 setup(
@@ -38,7 +41,7 @@ setup(
         # 'Programming Language :: Python :: 3.6',
         'Operating System :: OS Independent',
     ],
-    install_requires = [
+    install_requires=[
         'Click==7.0',
         'tree-format==0.1.2',
     ],
@@ -47,7 +50,12 @@ setup(
             'ipython',
             'pytest',
             'pytest-pep8',
-            'pytest-cov'
-        ]
+            'pytest-cov',
+            'tox',
+            'mypy',
+        ],
+        'test': [
+            'pytest',
+        ],
     }
 )

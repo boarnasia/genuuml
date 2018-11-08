@@ -74,7 +74,7 @@ class AliasedGroup(click.Group):
 @click.version_option(version=__version__)
 def main():
     """
-    Print given classes information in PlantUML format or Ascii Tree format.
+    PlantUML generator from python script
 
     Subcommands can be invoked by giving correct name or a partial name included in command name.
 
