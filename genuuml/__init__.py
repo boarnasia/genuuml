@@ -1,6 +1,8 @@
 from .genuuml import in_plant_uml, in_ascii_tree
 
-__version__ = "0.3.0"
+from .version import __version__
+
+
 __all__ = [
     'in_plant_uml',
     'in_ascii_tree',

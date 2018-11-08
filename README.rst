@@ -1,9 +1,9 @@
 genuuml
 =======
 
-Print given class information in PlantUML format or Ascii Tree format.
+PlantUML generator from python script
 
-Only test for python 3.6 on Mac
+Supprot for python 3.6 or higher
 
 :License: MIT
 
@@ -98,7 +98,10 @@ Usege
 Utility commands for developer
 ------------------------------
 
-`pytest` - run test with coverage report
+`pytest` - run test
+`pytest --cov=genuuml` - run test with coverage report
+`pytest --pep8` - run check PEP8 compliance
+`mypy` - run static type checker
 
 Other tools that I know
 -----------------------
