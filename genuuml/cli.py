@@ -126,7 +126,6 @@ def in_plant_uml(class_paths, indent, print_typehint, print_default_value,
     click.echo(source)
 
 
-
 @main.command()
 @click.argument('class_paths', nargs=-1, required=True)
 def in_ascii_tree(class_paths):
@@ -134,6 +133,19 @@ def in_ascii_tree(class_paths):
     Print in Ascii Tree format.
     """
     source, not_founds = genuuml.in_ascii_tree(class_paths)
+
+    _print_not_founds(not_founds)
+
+    click.echo(source)
+
+
+@main.command()
+@click.argument('class_paths', nargs=-1, required=True)
+def in_filepath_list(class_paths):
+    """
+    Print in Filepath list format.
+    """
+    source, not_founds = genuuml.in_filepath_list(class_paths)
 
     _print_not_founds(not_founds)
 
