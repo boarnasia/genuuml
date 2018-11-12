@@ -2,6 +2,7 @@
 Inspectors
 """
 
+import abc
 import inspect
 import re
 from types import ModuleType
@@ -29,13 +30,13 @@ def resolve_type(klass: Union[type, object, str]) -> type:
     :return: Type instance of `klass`
     """
     resolved_class = klass.__class__
-    if type(klass) == type:
+    if type(klass) in [type, abc.ABCMeta]:
         resolved_class = klass
 
     elif type(klass) == str:
         resolved_class = locate(klass)
 
-    if not type(resolved_class) == type:
+    if not type(resolved_class) in [type, abc.ABCMeta]:
         raise ClassNotFoundError("Class not found. [{}]".format(klass),
                                  klass)
 
