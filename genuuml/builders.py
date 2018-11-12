@@ -274,3 +274,21 @@ class AsciiTreeBuilder(Builder):
             children.append(self._build_tree(child, src))
         return [root, children]
 
+
+class FilepathListBuilder(Builder):
+
+    def build(self, registry: ClassRegistry) -> str:
+        """
+        Build the filepath list and return.
+
+        :param registry: ClassRegistry object to be built.
+        """
+        source = ""
+        for class_path, klass in registry.items():
+            if not getattr(klass.module, "__file__", None):
+                source += class_path + ": (no filepath)\n"
+            else:
+                source += class_path + ":\n" + \
+                    self.line(klass.module.__file__, 1)
+
+        return source

@@ -8,7 +8,11 @@ from importlib import import_module
 import click
 
 from .inspectors import ClassRegistry, ClassNotFoundError
-from .builders import PlantUMLBuilder, AsciiTreeBuilder
+from .builders import (
+    PlantUMLBuilder,
+    AsciiTreeBuilder,
+    FilepathListBuilder
+)
 
 
 def module_path_to_class_path(paths: List[str]) -> List[str]:
@@ -99,6 +103,20 @@ def in_ascii_tree(class_paths: List[str]) -> List:
     """
     registry, not_founds = build_registry(class_paths)
     builder = AsciiTreeBuilder()
+    source = builder.build(registry)
+
+    return [source, not_founds]
+
+
+def in_filepath_list(class_paths: List[str]) -> List:
+    """
+    Return source in filepath list format by inspecting given class paths.
+
+    :param class_paths: List of class paths and module paths
+    :return: Source in ascii tree format and not found path list
+    """
+    registry, not_founds = build_registry(class_paths)
+    builder = FilepathListBuilder()
     source = builder.build(registry)
 
     return [source, not_founds]
