@@ -3,9 +3,10 @@ Source builders
 """
 
 import re
+import textwrap
 from inspect import signature
-from typing import Callable, Set, Dict
 from operator import itemgetter
+from typing import Callable, Set, Dict
 
 from tree_format import format_tree
 
@@ -34,7 +35,7 @@ class Builder:
         :param indnet_level: indent level of the line
         """
 
-        return (self.indent * " ") + line + "\n"
+        return textwrap.indent(line, (" " * self.indent * indent_level)) + "\n"
 
     @property
     def indent(self) -> int:
